@@ -12,12 +12,10 @@ import com.grass.picturebackend.constant.UserConstant;
 import com.grass.picturebackend.exception.BusinessException;
 import com.grass.picturebackend.exception.ErrorCode;
 import com.grass.picturebackend.exception.ThrowUtils;
-import com.grass.picturebackend.model.dto.picture.PictureEditRequest;
-import com.grass.picturebackend.model.dto.picture.PictureQueryRequest;
-import com.grass.picturebackend.model.dto.picture.PictureUpdateRequest;
-import com.grass.picturebackend.model.dto.picture.PictureUploadRequest;
+import com.grass.picturebackend.model.dto.picture.*;
 import com.grass.picturebackend.model.entity.Picture;
 import com.grass.picturebackend.model.entity.User;
+import com.grass.picturebackend.model.enums.PictureReviewStatusEnum;
 import com.grass.picturebackend.model.vo.PictureTagCategory;
 import com.grass.picturebackend.model.vo.PictureVO;
 import com.grass.picturebackend.service.PictureService;
@@ -103,7 +101,7 @@ public class PictureController {
      */
     @PostMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest) {
+    public BaseResponse<Boolean> updatePicture(@RequestBody PictureUpdateRequest pictureUpdateRequest, HttpServletRequest request) {
         if (pictureUpdateRequest == null || pictureUpdateRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -115,6 +113,9 @@ public class PictureController {
         // 判断图片是否存在
         Picture oldPicture = pictureService.getById(pictureUpdateRequest.getId());
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        // 添加审核信息
+        pictureService.fillReviewParams(picture, loginUser);
         // 更新
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
@@ -149,7 +150,12 @@ public class PictureController {
     public BaseResponse<PictureVO> getPictureVOById(Long id) {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
         // 获取图片
-        Picture picture = pictureService.getById(id);
+        // Picture picture = pictureService.getById(id);
+        PictureQueryRequest pictureQueryRequest = new PictureQueryRequest();
+        pictureQueryRequest.setId(id);
+        // 用户只能查询审核通过的图片
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+        Picture picture = pictureService.getOne(pictureService.getQueryWrapper(pictureQueryRequest));
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR);
         return ResultUtils.success(pictureService.getPictureVO(picture));
     }
@@ -178,9 +184,11 @@ public class PictureController {
      * @return com.grass.picturebackend.common.BaseResponse<com.baomidou.mybatisplus.extension.plugins.pagination.Page < com.grass.picturebackend.model.vo.PictureVO>>
      */
     @PostMapping("/list/vo/page")
-    public BaseResponse<Page<PictureVO>>  listPictureVOByPage(@RequestBody PictureQueryRequest pictureQueryRequest) {
+    public BaseResponse<Page<PictureVO>> listPictureVOByPage(@RequestBody PictureQueryRequest pictureQueryRequest) {
         // 限制爬虫
         ThrowUtils.throwIf(pictureQueryRequest.getPageSize() >20, ErrorCode.PARAMS_ERROR);
+        // 普通用户默认只能查看已过审的数据
+        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
         // 分页查询
         Page<Picture> picturePage = pictureService.page(new Page<>(pictureQueryRequest.getCurrent(), pictureQueryRequest.getPageSize()),
                 pictureService.getQueryWrapper(pictureQueryRequest));
@@ -215,6 +223,8 @@ public class PictureController {
         if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
+        // 添加审核信息
+        pictureService.fillReviewParams(picture, loginUser);
         // 更新图片
         boolean result = pictureService.updateById(picture);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
@@ -234,6 +244,26 @@ public class PictureController {
         pictureTagCategory.setCategoryList(PictureTagCategoryConstant.CATEGORY_GROUP_LIST);
 
         return ResultUtils.success(pictureTagCategory);
+    }
+
+    /**
+     * @description: 图片审核 (管理员)
+     * @author: Mr.Liuxq
+     * @date 2025/4/28 10:27
+     * @param pictureReviewRequest 图片审核请求
+     * @param request 请求
+     * @return com.grass.picturebackend.common.BaseResponse<java.lang.Boolean>
+     */
+    @PostMapping("/review")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> doPictureReview(@RequestBody PictureReviewRequest pictureReviewRequest, HttpServletRequest request) {
+        if (pictureReviewRequest == null || pictureReviewRequest.getId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 查询登录用户
+        User loginUser = userService.getLoginUser(request);
+        pictureService.doPictureReview(pictureReviewRequest, loginUser);
+        return ResultUtils.success(true);
     }
 
 }

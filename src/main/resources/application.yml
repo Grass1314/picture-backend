@@ -11,6 +11,13 @@ spring:
     url: jdbc:mysql://175.24.73.151:3306/grass_picture
     username: grass_picture_root
     password: grass_picture_123456
+  profiles:
+    active: local
+  # 开放更大的文件上传体积
+  servlet:
+    multipart:
+      max-file-size: 10MB
+
 mybatis-plus:
   configuration:
     # MyBatis 配置

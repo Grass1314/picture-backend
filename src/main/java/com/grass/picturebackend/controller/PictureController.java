@@ -66,6 +66,22 @@ public class PictureController {
     }
 
     /**
+     * @description: 通过 URL 上传图片（可重新上传）
+     * @author: Mr.Liuxq
+     * @date 2025/4/28 10:27
+     * @param pictureUploadRequest 图片上传请求
+     * @param request 图片信息
+     * @return com.grass.picturebackend.common.BaseResponse<com.grass.picturebackend.model.vo.PictureVO>
+     */
+    @PostMapping("/upload/url")
+    public BaseResponse<PictureVO> uploadPictureByUrl(@RequestBody PictureUploadRequest pictureUploadRequest, HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        String fileUrl = pictureUploadRequest.getFileUrl();
+        PictureVO pictureVO = pictureService.uploadPicture(fileUrl, pictureUploadRequest, loginUser);
+        return ResultUtils.success(pictureVO);
+    }
+
+    /**
      * @description: 删除图片
      * @author: Mr.Liuxq
      * @date 2025/4/28 10:27

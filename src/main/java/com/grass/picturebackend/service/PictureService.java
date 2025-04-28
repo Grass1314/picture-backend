@@ -9,18 +9,17 @@ import com.grass.picturebackend.model.dto.picture.PictureUploadRequest;
 import com.grass.picturebackend.model.entity.Picture;
 import com.grass.picturebackend.model.entity.User;
 import com.grass.picturebackend.model.vo.PictureVO;
-import org.springframework.web.multipart.MultipartFile;
 
 public interface PictureService extends IService<Picture> {
 
     /**
      * 上传图片
-     * @param multipartFile 文件
+     * @param inputSource 文件
      * @param pictureUploadRequest 文件上传表单
      * @param loginUser 登录用户
      * @return 图片信息
      */
-    PictureVO uploadPicture(MultipartFile multipartFile, PictureUploadRequest pictureUploadRequest, User loginUser);
+    PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser);
 
     /**
      * 获取查询条件

@@ -282,4 +282,21 @@ public class PictureController {
         return ResultUtils.success(true);
     }
 
+    /**
+     * @description: 图片批量抓取上传 (管理员)
+     * @author: Mr.Liuxq
+     * @date 2025/4/28 10:27
+     * @param pictureUploadByBatchRequest 图片批量上传请求
+     * @param request 请求
+     * @return com.grass.picturebackend.common.BaseResponse<java.lang.Integer>
+     */
+    @PostMapping("/upload/bach")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Integer> uploadPictureByBatch(@RequestBody PictureUploadByBatchRequest pictureUploadByBatchRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureUploadByBatchRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        Integer uploadCount = pictureService.uploadPictureByBatch(pictureUploadByBatchRequest, loginUser);
+        return ResultUtils.success(uploadCount);
+    }
+
 }

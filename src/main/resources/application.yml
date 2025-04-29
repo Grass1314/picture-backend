@@ -11,6 +11,13 @@ spring:
     url: jdbc:mysql://175.24.73.151:3306/grass_picture
     username: grass_picture_root
     password: grass_picture_123456
+  # Redis 配置
+  redis:
+    database: 0
+    host: 175.24.73.151
+    port: 6379
+    timeout: 5000
+    password: grass_redis!
   profiles:
     active: local
   # 开放更大的文件上传体积

@@ -18,6 +18,11 @@ spring:
     port: 6379
     timeout: 5000
     password: grass_redis!
+  # Session 配置
+  session:
+    store-type: redis
+    # session 30 天后过期
+    timeout: 2592000
   profiles:
     active: local
   # 开放更大的文件上传体积

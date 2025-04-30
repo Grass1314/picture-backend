@@ -4,6 +4,8 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.grass.picturebackend.annotation.AuthCheck;
 import com.grass.picturebackend.common.BaseResponse;
 import com.grass.picturebackend.common.DeleteRequest;
@@ -22,7 +24,6 @@ import com.grass.picturebackend.model.vo.PictureVO;
 import com.grass.picturebackend.service.PictureService;
 import com.grass.picturebackend.service.UserService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.util.DigestUtils;
@@ -49,8 +50,17 @@ public class PictureController {
 
     @Resource
     private PictureService pictureService;
-    @Autowired
+
+    @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+    private final Cache<String, String> LOCAL_CACHE =
+            Caffeine.newBuilder().initialCapacity(1024)
+                    .maximumSize(10000L)
+                    // 缓存 5 分钟移除
+                    .expireAfterWrite(5L, TimeUnit.MINUTES)
+                    .build();
+
 
 
     /**
@@ -324,12 +334,19 @@ public class PictureController {
         // 构建缓存key
         String queryCondition = JSONUtil.toJsonStr(pictureQueryRequest);
         String hashKey = DigestUtils.md5DigestAsHex(queryCondition.getBytes());
-        String redisKey = "grasspicture:listPictureVOByPage:" + hashKey;
-        // 从Redis缓存中查询
+        String redisKey = String.format("grasspicture:listPictureVOByPage:%s",hashKey);
+        // 1.查询本地缓存
+        String cachedValue = LOCAL_CACHE.getIfPresent(redisKey);
+        if (cachedValue != null) {
+            return ResultUtils.success(JSONUtil.toBean(cachedValue, Page.class));
+        }
+        // 2.从Redis缓存中查询
         ValueOperations<String, String> valueOperations = stringRedisTemplate.opsForValue();
-        String cacheResult = valueOperations.get(redisKey);
-        if (cacheResult != null) {
-            return ResultUtils.success(JSONUtil.toBean(cacheResult, Page.class));
+        cachedValue = valueOperations.get(redisKey);
+        if (cachedValue != null) {
+            // 如果缓存命中，更新本地缓存，返回结果
+            LOCAL_CACHE.put(redisKey, cachedValue);
+            return ResultUtils.success(JSONUtil.toBean(cachedValue, Page.class));
         }
 
         // 从数据库中查询
@@ -338,11 +355,28 @@ public class PictureController {
 
         // 缓存结果
         String cacheValue = JSONUtil.toJsonStr(pictureVOPage);
+        // 写入本地缓存
+        LOCAL_CACHE.put(redisKey, cacheValue);
         // 设置5~10分钟过期缓存
         int cacheTime = 300 + RandomUtil.randomInt(0, 300);
         valueOperations.set(redisKey, cacheValue, cacheTime, TimeUnit.SECONDS);
 
         return ResultUtils.success(pictureVOPage);
+    }
+
+    /**
+     * @description: 清除图片文件 (管理员)
+     * @author: Mr.Liuxq
+     * @date 2025/4/28 10:27
+     * @param pictureClearRequest 图片清除请求
+     * @return com.grass.picturebackend.common.BaseResponse<java.lang.Boolean>
+     */
+    @GetMapping("/clear")
+    public BaseResponse<Boolean> clearPicture(PictureClearRequest pictureClearRequest) {
+        ThrowUtils.throwIf(pictureClearRequest == null, ErrorCode.PARAMS_ERROR);
+        Picture picture = pictureService.getById(pictureClearRequest.getId());
+        pictureService.clearPictureFile(picture);
+        return ResultUtils.success(true);
     }
 
 }

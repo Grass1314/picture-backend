@@ -7,9 +7,11 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.grass.picturebackend.config.CosClientConfig;
 import com.grass.picturebackend.exception.BusinessException;
 import com.grass.picturebackend.exception.ErrorCode;
 import com.grass.picturebackend.exception.ThrowUtils;
+import com.grass.picturebackend.manager.CosManager;
 import com.grass.picturebackend.manager.upload.FilePictureUpload;
 import com.grass.picturebackend.manager.upload.PictureUploadTemplate;
 import com.grass.picturebackend.manager.upload.UrlPictureUpload;
@@ -31,6 +33,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -59,6 +62,13 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private CosManager cosManager;
+
+    @Resource
+    private CosClientConfig cosClientConfig;
+
 
     /**
      * 上传图片
@@ -101,12 +111,12 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         // 封装图片信息
         Picture picture = new Picture();
         picture.setUrl(uploadPictureResult.getUrl());
+        picture.setThumbnailUrl(uploadPictureResult.getThumbnailUrl());
         String picName = uploadPictureResult.getPicName();
         if (pictureUploadRequest != null && StrUtil.isNotBlank(pictureUploadRequest.getPicName())) {
             picName = pictureUploadRequest.getPicName();
         }
         picture.setName(picName);
-        picture.setUrl(uploadPictureResult.getUrl());
         picture.setName(uploadPictureResult.getPicName());
         picture.setPicSize(uploadPictureResult.getPicSize());
         picture.setPicWidth(uploadPictureResult.getPicWidth());
@@ -349,6 +359,42 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
             }
         }
         return uploadCount;
+    }
+
+    /**
+     * 清理图片文件
+     *
+     * @param picture 图片
+     */
+    @Override
+    @Async
+    public void clearPictureFile(Picture picture) {
+        // 判断该图片是否被多处地方使用
+        String pictureUrl = picture.getUrl();
+        Long count = this.lambdaQuery().eq(Picture::getUrl, pictureUrl).count();
+        // 如果被多处地方使用，则不删除
+        if (count > 1) {
+            return;
+        }
+        // 调用删除图片方法之前对URL进行处理，现在URL中含有域名，实际只需要key值（存储路径）
+        String key = pictureUrl.substring(pictureUrl.indexOf(cosClientConfig.getHost()));
+        try {
+            cosManager.deleteObject(key);
+        } catch (Exception e) {
+            log.error("删除图片失败, url = {}",  pictureUrl);
+        }
+        // 删除缩略图
+        String thumbnailUrl = picture.getThumbnailUrl();
+        if (StrUtil.isNotBlank(thumbnailUrl)) {
+            String thumbnailKey = thumbnailUrl.substring(thumbnailUrl.indexOf(cosClientConfig.getHost()));
+            try {
+                cosManager.deleteObject(thumbnailKey);
+            } catch (Exception e) {
+                log.error("删除缩略图失败, url = {}",  thumbnailUrl);
+            }
+        }
+
+
     }
 
 }

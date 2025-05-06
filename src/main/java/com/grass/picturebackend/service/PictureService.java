@@ -3,10 +3,7 @@ package com.grass.picturebackend.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.grass.picturebackend.model.dto.picture.PictureQueryRequest;
-import com.grass.picturebackend.model.dto.picture.PictureReviewRequest;
-import com.grass.picturebackend.model.dto.picture.PictureUploadByBatchRequest;
-import com.grass.picturebackend.model.dto.picture.PictureUploadRequest;
+import com.grass.picturebackend.model.dto.picture.*;
 import com.grass.picturebackend.model.entity.Picture;
 import com.grass.picturebackend.model.entity.User;
 import com.grass.picturebackend.model.vo.PictureVO;
@@ -78,4 +75,24 @@ public interface PictureService extends IService<Picture> {
      */
     void clearPictureFile(Picture picture);
 
+    /**
+     * 检查图片空间权限
+     * @param loginUser 登录用户
+     * @param picture   图片
+     */
+    void checkPictureAuth(User loginUser, Picture picture);
+
+    /**
+     * 删除图片
+     * @param pictureId 图片id
+     * @param loginUser 登录用户
+     */
+    void deletePicture(Long pictureId, User loginUser);
+
+    /**
+     * 编辑图片
+     * @param pictureEditRequest 图片编辑请求
+     * @param loginUser 登录用户
+     */
+    void editPicture(PictureEditRequest pictureEditRequest, User loginUser);
 }

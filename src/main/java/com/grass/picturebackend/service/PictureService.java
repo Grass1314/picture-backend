@@ -8,6 +8,8 @@ import com.grass.picturebackend.model.entity.Picture;
 import com.grass.picturebackend.model.entity.User;
 import com.grass.picturebackend.model.vo.PictureVO;
 
+import java.util.List;
+
 public interface PictureService extends IService<Picture> {
 
     /**
@@ -95,4 +97,26 @@ public interface PictureService extends IService<Picture> {
      * @param loginUser 登录用户
      */
     void editPicture(PictureEditRequest pictureEditRequest, User loginUser);
+
+    /**
+     * 根据颜色搜索图片
+     * @param searchPictureByColorRequest 搜索图片请求
+     * @param loginUser 登录用户
+     * @return 图片信息列表
+     */
+    List<PictureVO> searchPictureByColor(SearchPictureByColorRequest searchPictureByColorRequest, User loginUser);
+
+    /**
+     * 批量编辑图片
+     * @param pictureEditByBatchRequest 图片批量编辑请求
+     * @param loginUser 登录用户
+     */
+    void editPictureByBatch(PictureEditByBatchRequest pictureEditByBatchRequest, User loginUser);
+
+    /**
+     * 批量编辑图片元数据
+     * @param request 图片批量编辑请求
+     * @param loginUserId 登录用户
+     */
+    void batchPictureMetadata(PictureBatchEditRequest request, Long loginUserId);
 }

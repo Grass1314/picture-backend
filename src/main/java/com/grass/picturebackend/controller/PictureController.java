@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.grass.picturebackend.annotation.AuthCheck;
+import com.grass.picturebackend.api.imagesearch.ImageSearchApiFacade;
+import com.grass.picturebackend.api.imagesearch.model.ImageSearchResult;
 import com.grass.picturebackend.common.BaseResponse;
 import com.grass.picturebackend.common.DeleteRequest;
 import com.grass.picturebackend.common.ResultUtils;
@@ -34,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -378,6 +381,66 @@ public class PictureController {
         ThrowUtils.throwIf(pictureClearRequest == null, ErrorCode.PARAMS_ERROR);
         Picture picture = pictureService.getById(pictureClearRequest.getId());
         pictureService.clearPictureFile(picture);
+        return ResultUtils.success(true);
+    }
+
+    /**
+     * @description: 图片搜索 (图片)
+     * @author: Mr.Liuxq
+     * @date 2025/4/28 10:27
+     * @param searchPictureByPictureRequest 图片搜索请求
+     * @return com.grass.picturebackend.common.BaseResponse<java.util.List < com.grass.picturebackend.api.imagesearch.model.ImageSearchResult>>
+     */
+    @PostMapping("/search/picture")
+    public BaseResponse<List<ImageSearchResult>> searchPictureByPicture(@RequestBody SearchPictureByPictureRequest searchPictureByPictureRequest) {
+        ThrowUtils.throwIf(searchPictureByPictureRequest == null, ErrorCode.PARAMS_ERROR);
+        Long pictureId = searchPictureByPictureRequest.getPictureId();
+        Picture oldPicture = pictureService.getById(pictureId);
+        ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
+        List<ImageSearchResult> resultList = ImageSearchApiFacade.searchImage(oldPicture.getUrl());
+        return ResultUtils.success(resultList);
+    }
+
+    /**
+     * @description: 图片搜索 (颜色)
+     * @author: Mr.Liuxq
+     * @date 2025/4/28 10:27
+     * @param searchPictureByColorRequest 图片搜索请求
+     * @return com.grass.picturebackend.common.BaseResponse<java.util.List < com.grass.picturebackend.model.vo.PictureVO>>
+     */
+    @PostMapping("/search/color")
+    public BaseResponse<List<PictureVO>> searchPictureByColor(@RequestBody SearchPictureByColorRequest searchPictureByColorRequest, HttpServletRequest request) {
+        List<PictureVO> pictureVOS = pictureService.searchPictureByColor(searchPictureByColorRequest, userService.getLoginUser(request));
+        return ResultUtils.success(pictureVOS);
+    }
+
+    /**
+     * @description: 图片批量编辑
+     * @author: Mr.Liuxq
+     * @date 2025/4/28 10:27
+     * @param pictureEditByBatchRequest 图片批量编辑请求
+     * @return com.grass.picturebackend.common.BaseResponse<java.lang.Boolean>
+     */
+    @PostMapping("/edit/batch")
+    public BaseResponse<Boolean> editPictureByBatch(@RequestBody PictureEditByBatchRequest pictureEditByBatchRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureEditByBatchRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        pictureService.editPictureByBatch(pictureEditByBatchRequest, loginUser);
+        return ResultUtils.success(true);
+    }
+
+    /**
+     * @description: 图片批量编辑 (元数据)
+     * @author: Mr.Liuxq
+     * @date 2025/4/28 10:27
+     * @param pictureBatchEditRequest 图片批量编辑请求
+     * @return com.grass.picturebackend.common.BaseResponse<java.lang.Boolean>
+     */
+    @PostMapping("/edit/batch/metadata")
+    public BaseResponse<Boolean> batchPictureMetadata(@RequestBody PictureBatchEditRequest pictureBatchEditRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(pictureBatchEditRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        pictureService.batchPictureMetadata(pictureBatchEditRequest, loginUser.getId());
         return ResultUtils.success(true);
     }
 

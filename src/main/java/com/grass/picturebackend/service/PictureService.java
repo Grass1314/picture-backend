@@ -3,6 +3,7 @@ package com.grass.picturebackend.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.grass.picturebackend.api.aliyunai.model.CreateOutPaintingTaskResponse;
 import com.grass.picturebackend.model.dto.picture.*;
 import com.grass.picturebackend.model.entity.Picture;
 import com.grass.picturebackend.model.entity.User;
@@ -119,4 +120,13 @@ public interface PictureService extends IService<Picture> {
      * @param loginUserId 登录用户
      */
     void batchPictureMetadata(PictureBatchEditRequest request, Long loginUserId);
+
+    /**
+     * 创建扩图任务
+     *
+     * @param createPictureOutPaintingTaskRequest 扩图任务参数
+     * @param loginUser 登录用户
+     */
+    CreateOutPaintingTaskResponse createPictureOutPaintingTask(CreatePictureOutPaintingTaskRequest createPictureOutPaintingTaskRequest, User loginUser);
+
 }

@@ -179,7 +179,12 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         picture.setPicScale(uploadPictureResult.getPicScale());
         picture.setPicFormat(uploadPictureResult.getPicFormat());
         picture.setUserId(loginUser.getId());
-        picture.setSpaceId(spaceId);
+        // 补充空间 id，默认为 0
+        if (spaceId == null) {
+            picture.setSpaceId(0L);
+        } else {
+            picture.setSpaceId(spaceId);
+        }
         picture.setPicColor(uploadPictureResult.getPicColor());
         // 如果pictureId不为空，则更新图片信息,否则新增
         if (pictureId != null) {
@@ -508,7 +513,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         // 开启事务
         transactionTemplate.execute(status -> {
             // 删除图片
-            boolean result = this.removeById(pictureId);
+            QueryWrapper<Picture> pictureQueryWrapper = new QueryWrapper<>();
+            pictureQueryWrapper.eq("id", pictureId).eq("spaceId",  oldPicture.getSpaceId());
+            boolean result = this.remove(pictureQueryWrapper);
             ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
             // 释放存储空间
             Long spaceId = oldPicture.getSpaceId();

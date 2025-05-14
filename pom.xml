@@ -92,11 +92,11 @@
         </dependency>
 
         <!-- 分库分表 -->
-        <!--<dependency>
+        <dependency>
             <groupId>org.apache.shardingsphere</groupId>
             <artifactId>shardingsphere-jdbc-core-spring-boot-starter</artifactId>
             <version>5.2.0</version>
-        </dependency>-->
+        </dependency>
 
         <!-- HTML 解析：https://jsoup.org/ -->
         <dependency>

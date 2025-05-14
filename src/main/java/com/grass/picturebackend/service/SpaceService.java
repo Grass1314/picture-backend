@@ -1,33 +1,67 @@
 package com.grass.picturebackend.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.grass.picturebackend.model.dto.space.SpaceAddRequest;
+import com.grass.picturebackend.model.dto.space.SpaceQueryRequest;
 import com.grass.picturebackend.model.entity.Space;
 import com.grass.picturebackend.model.entity.User;
+import com.grass.picturebackend.model.vo.SpaceVO;
+
+import javax.servlet.http.HttpServletRequest;
 
 public interface SpaceService extends IService<Space> {
 
     /**
-     * 校验
+     * 创建空间
      *
-     * @param space 空间PO
-     * @param add 是否新增
-     */
-    void validSpace(Space space ,boolean add);
-
-    /**
-     * 填充空间信息
-     * @param space 空间PO
-     */
-    void fillSpaceBySpaceLevel(Space space);
-
-    /**
-     * 添加空间
-     * @param spaceAddRequest 空间添加请求
-     * @param loginUser 登录用户
-     * @return 空间id
+     * @param spaceAddRequest
+     * @param loginUser
+     * @return
      */
     Long addSpace(SpaceAddRequest spaceAddRequest, User loginUser);
+
+    /**
+     * 校验空间
+     *
+     * @param space
+     * @param add   是否为创建时检验
+     */
+    void validSpace(Space space, boolean add);
+
+    /**
+     * 获取空间包装类（单条）
+     *
+     * @param space
+     * @param request
+     * @return
+     */
+    SpaceVO getSpaceVO(Space space, HttpServletRequest request);
+
+    /**
+     * 获取空间包装类（分页）
+     *
+     * @param spacePage
+     * @param request
+     * @return
+     */
+    Page<SpaceVO> getSpaceVOPage(Page<Space> spacePage, HttpServletRequest request);
+
+    /**
+     * 获取查询对象
+     *
+     * @param spaceQueryRequest
+     * @return
+     */
+    QueryWrapper<Space> getQueryWrapper(SpaceQueryRequest spaceQueryRequest);
+
+    /**
+     * 根据空间级别填充空间对象
+     *
+     * @param space
+     */
+    void fillSpaceBySpaceLevel(Space space);
 
     /**
      * 校验空间权限

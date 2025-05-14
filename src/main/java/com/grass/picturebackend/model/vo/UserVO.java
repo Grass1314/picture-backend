@@ -1,6 +1,8 @@
 package com.grass.picturebackend.model.vo;
 
+import com.grass.picturebackend.model.entity.User;
 import lombok.Data;
+import org.springframework.beans.BeanUtils;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -60,6 +62,36 @@ public class UserVO implements Serializable {
      * 创建时间
      */
     private Date createTime;
+
+    /**
+     * 封装类转对象
+     *
+     * @param userVO 用户视图
+     * @return 用户对象
+     */
+    public static User voToObj(UserVO userVO) {
+        if (userVO == null) {
+            return null;
+        }
+        User user = new User();
+        BeanUtils.copyProperties(userVO, user);
+        return user;
+    }
+
+    /**
+     * 对象转封装类
+     *
+     * @param user 用户对象
+     * @return 用户视图
+     */
+    public static UserVO objToVo(User user) {
+        if (user == null) {
+            return null;
+        }
+        UserVO userVO = new UserVO();
+        BeanUtils.copyProperties(user, userVO);
+        return userVO;
+    }
 
     private static final long serialVersionUID = 1L;
 }

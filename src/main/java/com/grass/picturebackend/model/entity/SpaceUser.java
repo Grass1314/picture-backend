@@ -38,6 +38,16 @@ public class SpaceUser implements Serializable {
     private String spaceRole;
 
     /**
+     * 邀请确认状态：0:待定 1:已确认 2:拒绝
+     */
+    private String invitationConfirmStatus;
+
+    /**
+     * 邀请人 id
+     */
+    private Long createUserId;
+
+    /**
      * 创建时间
      */
     private Date createTime;

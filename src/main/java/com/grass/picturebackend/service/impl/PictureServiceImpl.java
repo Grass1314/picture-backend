@@ -114,9 +114,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
             Space space = spaceService.getById(spaceId);
             ThrowUtils.throwIf(space == null, ErrorCode.NOT_FOUND_ERROR, "空间不存在");
             // 判断权限，必须是空间创建人或管理员才能上传
-            if (!space.getUserId().equals(loginUser.getId())) {
+            /*if (!space.getUserId().equals(loginUser.getId())) {
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "没有空间权限");
-            }
+            }*/
             // 校验空间条数和大小
             if (space.getMaxCount() != null && space.getTotalCount() >= space.getMaxCount()) {
                 throw new BusinessException(ErrorCode.OPERATION_ERROR, "空间条数不足");
@@ -135,9 +135,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
             Picture oldPicture = this.getById(pictureId);
             ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR, "图片不存在");
             // 仅本人或管理员可编辑
-            if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
+            /*if (!oldPicture.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-            }
+            }*/
             // 校验空间是否一致
             if (spaceId == null) {
                 if (oldPicture.getSpaceId() != null) {
@@ -504,7 +504,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
         // 检验图片空间权限
-        this.checkPictureAuth(loginUser, oldPicture);
+//        this.checkPictureAuth(loginUser, oldPicture);
         // 开启事务
         transactionTemplate.execute(status -> {
             // 删除图片
@@ -545,7 +545,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
         // 查询图片是否存在
         Picture oldPicture = this.getById(pictureEditRequest.getId());
         ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
-        this.checkPictureAuth(loginUser, oldPicture);
+//        this.checkPictureAuth(loginUser, oldPicture);
         // 添加审核信息
         this.fillReviewParams(picture, loginUser);
         // 更新图片

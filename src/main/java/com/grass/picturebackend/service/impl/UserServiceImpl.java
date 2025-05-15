@@ -79,6 +79,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User user = new User();
         BeanUtil.copyProperties(userRegisterRequest, user);
         user.setUserName("无名");
+        user.setUserPassword(encryptPassword);
         user.setUserRole(UserRoleEnum.USER.getValue());
         boolean save = this.save(user);
         if (!save) {
